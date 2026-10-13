@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gradazione e zuccheri</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gradazione">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="gradazione-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Cpath d='M13 6h6M14.5 6v7l-5 9.5a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3l-5-9.5V6' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M11.4 19.5h9.2l1.6 3a1 1 0 0 1-.9 1.5H10.7a1 1 0 0 1-.9-1.5z' fill='%23FF5A00'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@400..900&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<script>
+/* Tema e colore fluo applicati prima del disegno, per evitare il lampo bianco */
+try{
+  var s=JSON.parse(localStorage.getItem('gz.settings')||'{}');
+  var t=s.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.style.setProperty('--neon',['#FF5A00','#C6FF00','#00E5FF','#FF2BB4','#9B6BFF'][s.neon||0]);
+  var m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',t==='dark'?'#000000':'#ffffff');
+}catch(e){}
+</script>
+<style>
+@property --neon{syntax:'<color>';inherits:true;initial-value:#FF5A00}
+:root{
+  --neon:#FF5A00;
+  --paper:#ffffff; --panel:#f1f1f1; --line:#d8d8d8; --ink:#000000; --mute:#666666;
+  --display:'Doto','Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ui:'Geist',-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+  --num:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+  transition:--neon .45s ease;
+}
+:root[data-theme="dark"]{
+  --paper:#000000; --panel:#141414; --line:#2c2c2c; --ink:#ffffff; --mute:#9a9a9a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--paper);-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100dvh;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;transition:background-color .35s ease,color .35s ease}
+::selection{background:var(--neon);color:#000}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(44px + env(safe-area-inset-bottom,0px))}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 5px color-mix(in srgb,var(--neon) 80%,transparent)}
+.dim{color:var(--mute)}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+
+/* testata */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(30px,9vw,44px);line-height:.98;letter-spacing:-.01em}
+.sub{margin:10px 0 0;color:var(--mute);font-size:14px;max-width:26ch}
+.tools{display:flex;gap:10px;padding-top:2px}
+.round{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;display:grid;place-items:center;padding:0;
+  transition:background-color .25s,transform .25s}
+.round:active{transform:scale(.94)}
+.round svg{width:20px;height:20px;display:block}
+.swatch{width:20px;height:20px;border-radius:50%;background:var(--neon);box-shadow:0 0 0 1.5px var(--paper) inset}
+#btnTheme svg{transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+:root[data-theme="dark"] #btnTheme svg{transform:rotate(180deg)}
+
+/* convertitore */
+.conv{margin:26px 0 22px}
+.grp{margin:0 0 6px}
+.lab{display:block;font-size:13px;color:var(--mute);margin:0 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:50px;padding:0 12px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;font-size:14.5px;font-weight:500;
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;transition:background-color .25s,color .25s}
+.chip small{font-size:10.5px;font-weight:400;opacity:.72;margin-top:2px;min-height:1em}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.chips.flat .chip{min-height:42px}
+.input-row{display:flex;align-items:flex-end;gap:14px;margin:16px 0 18px}
+.field{position:relative;flex:1;border-bottom:1.5px solid var(--ink)}
+.field::after{content:'';position:absolute;left:0;right:0;bottom:-1.5px;height:4px;background:var(--neon);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.field:focus-within::after{transform:scaleX(1)}
+.field input{width:calc(100% - 64px);border:0;background:transparent;padding:6px 0 8px;font-family:var(--num);font-size:34px;font-weight:500;outline:none;border-radius:0;caret-color:var(--neon);box-shadow:none}
+.field .suf{position:absolute;right:0;bottom:12px;font-size:14px;color:var(--mute)}
+
+/* lettura */
+.readout{position:relative;border-radius:22px;padding:16px 18px 18px;color:#fff;background-color:#000;border:1px solid #2a2a2a;overflow:hidden;
+  background-image:radial-gradient(circle at 1px 1px,#202020 1px,transparent 1.3px);background-size:10px 10px}
+.r-head{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:30px}
+.r-cap{font-size:13px;color:#9a9a9a}
+.dec{display:flex;align-items:center;gap:8px;font-size:12px;color:#9a9a9a}
+.dec button{width:28px;height:28px;border-radius:50%;border:1px solid #4a4a4a;background:transparent;color:#fff;padding:0;line-height:1;font-size:16px}
+.dec button:active{background:#222}
+.dec output{font-family:var(--num);min-width:1ch;text-align:center;color:#fff}
+.r-val{margin:12px 0 0;font-family:var(--display);font-weight:800;font-size:96px;line-height:1.02;color:var(--neon);white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.r-unit{display:flex;align-items:baseline;gap:10px;margin-top:2px}
+.r-unit b{font-size:20px;font-weight:600}
+.r-unit span{font-size:13px;color:#9a9a9a}
+.r-dens{margin-top:14px;padding-top:12px;border-top:1px solid #2a2a2a;font-size:13px;color:#9a9a9a;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.r-dens .num{color:#fff;font-size:15px}
+.gauge{display:flex;justify-content:space-between;margin-top:16px}
+.gauge i{width:5px;height:5px;border-radius:50%;background:#2e2e2e;transition:background-color .25s}
+.gauge i.on{background:var(--neon)}
+.g-scale{display:flex;justify-content:space-between;font-family:var(--num);font-size:11px;color:#8a8a8a;margin-top:7px}
+.g-scale .mid{color:#fff}
+.r-note{margin:10px 0 0;font-size:12.5px;color:#c9c9c9;min-height:1.2em}
+
+/* fattore */
+.factor{margin:22px 0 4px}
+.factor .cap{font-size:13px;color:var(--mute);margin:0 0 8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--ink);border-radius:14px;overflow:hidden}
+.seg button{border:0;background:transparent;text-align:left;padding:10px 14px;display:flex;flex-direction:column;gap:2px;min-height:58px;
+  transition:background-color .25s,color .25s}
+.seg button+button{border-left:1.5px solid var(--ink)}
+.seg b{font-weight:600;font-size:15px}
+.seg span{font-family:var(--num);font-size:12.5px;opacity:.75}
+.seg button[aria-checked="true"]{background:var(--ink);color:var(--paper)}
+
+/* sezioni a tendina */
+.accs{margin-top:24px;border-top:1.5px solid var(--ink)}
+details.acc{border-bottom:1px solid var(--line)}
+details.acc>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 2px;cursor:pointer;min-height:64px}
+details.acc>summary::-webkit-details-marker{display:none}
+.s-t{display:block;font-size:18px;font-weight:600;letter-spacing:-.005em}
+.s-h{display:block;font-size:13px;color:var(--mute);margin-top:2px}
+.ico{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;transition:transform .3s cubic-bezier(.2,.7,.2,1),background-color .25s}
+.ico svg{width:12px;height:12px}
+details[open]:not(.closing)>summary .ico{transform:rotate(45deg);background:var(--neon);border-color:var(--ink)}
+details.acc[open]>summary .ico svg path{stroke:var(--ink)}
+.acc-body{padding:2px 2px 22px}
+
+/* righe valori */
+.rows{margin:0;padding:0;list-style:none}
+.row{position:relative;display:grid;grid-template-columns:1fr auto 52px;gap:10px;align-items:baseline;width:100%;text-align:left;
+  background:none;border:0;border-bottom:1px solid var(--line);padding:13px 2px 13px 14px;min-height:48px}
+.rows .row:last-child{border-bottom:0}
+.row .l{font-size:15px}
+.row .l small{display:block;font-size:12px;color:var(--mute);margin-top:1px}
+.row .v{font-family:var(--num);font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
+.row .u{font-size:13px;color:var(--mute)}
+.row::before{content:'';position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;opacity:0}
+.row.is-in::before{opacity:1;border:1.5px solid var(--ink)}
+.row.is-out::before{opacity:1;background:var(--neon);box-shadow:0 0 0 1.5px var(--ink)}
+button.row:active{background:var(--panel)}
+div.row{padding-left:2px}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--mute);margin:12px 0 0;flex-wrap:wrap}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend .i1{border:1.5px solid var(--ink)} .legend .i2{background:var(--neon);box-shadow:0 0 0 1.5px var(--ink)}
+
+/* moduli */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px;margin:6px 0 16px}
+.fld{min-width:0}
+.fld label,.fld .flab{display:block;font-size:12.5px;color:var(--mute);margin:0 0 4px}
+.fld input{width:100%;min-width:0;border:0;border-bottom:1.5px solid var(--ink);background:transparent;padding:6px 0 7px;border-radius:0;font-family:var(--num);font-size:20px;outline:none;caret-color:var(--neon);box-shadow:none}
+.fld input:focus{background:linear-gradient(0deg,color-mix(in srgb,var(--neon) 35%,transparent),transparent 40%)}
+.fld.full{grid-column:1/-1}
+.grp-t{grid-column:1/-1;font-size:15px;font-weight:600;margin:6px 0 -6px;padding-top:14px;border-top:1px solid var(--line)}
+.pill{min-height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;font-size:13.5px;font-weight:500;white-space:nowrap;flex:none}
+.out{margin:20px 0 0}
+.big-n{display:flex;align-items:baseline;gap:10px;margin:0 0 4px;flex-wrap:wrap}
+.big-n .n{font-family:var(--display);font-weight:800;font-size:46px;line-height:1}
+.big-n .u{font-size:15px;color:var(--mute)}
+.msg{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--panel);font-size:14px}
+.note{font-size:12.5px;color:var(--mute);margin:14px 0 0}
+.tw{overflow-x:auto;margin:14px -2px 0;-webkit-overflow-scrolling:touch}
+table.tbl{border-collapse:collapse;width:100%;font-size:12.5px}
+.tbl th{font-weight:500;text-align:right;color:var(--mute);font-size:11.5px;padding:8px 6px;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+.tbl td{text-align:right;padding:10px 6px;border-bottom:1px solid var(--line);font-family:var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left;padding-left:2px;white-space:normal}
+.tbl td:first-child{font-family:var(--ui);font-size:13.5px}
+.tbl td small{display:block;font-size:10.5px;color:var(--mute);font-family:var(--ui)}
+.tbl tr.em td:first-child{font-weight:600}
+.tbl tr.em td:last-child{font-weight:600}
+.tbl td.dl{color:var(--ink)}
+.tbl td.dl i{font-style:normal;display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 0 1px var(--ink);margin-right:6px;vertical-align:1px}
+
+/* come e calcolato */
+.steps{margin:0;padding:0;list-style:none;counter-reset:st}
+.steps li{counter-increment:st;position:relative;padding:0 0 18px 38px}
+.steps li::before{content:counter(st);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font-family:var(--num);font-size:12px}
+.steps li:not(:last-child)::after{content:'';position:absolute;left:12.75px;top:30px;bottom:4px;border-left:1.5px dotted var(--mute)}
+.steps h4{margin:2px 0 4px;font-size:15px;font-weight:600}
+.steps p{margin:0;font-size:14px;color:var(--mute)}
+.steps code{font-family:var(--num);font-size:13px;color:var(--ink);background:var(--panel);padding:2px 6px;border-radius:6px;overflow-wrap:anywhere}
+.steps code.big{display:block;padding:8px 10px;margin-top:8px;line-height:1.55}
+.sub-h{font-size:15px;font-weight:600;margin:22px 0 8px}
+.names{margin:0;padding:0;list-style:none}
+.names li{padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
+.names li b{display:block;color:var(--ink);font-size:15px;font-weight:600}
+.src{margin:0;padding:0;list-style:none;font-size:13.5px}
+.src li{padding:8px 0;border-top:1px solid var(--line)}
+.src a{color:var(--ink);text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:var(--neon)}
+.src span{display:block;color:var(--mute);font-size:12.5px}
+
+/* piede */
+footer{margin-top:34px;padding-top:18px;border-top:1.5px solid var(--ink);display:flex;gap:12px;align-items:center}
+footer svg{flex:none;width:30px;height:30px}
+footer b{display:block;font-size:14px;font-weight:600}
+footer span{display:block;font-size:12px;color:var(--mute);margin-top:1px}
+
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#000;color:#fff;
+  border:1px solid #333;border-radius:999px;padding:10px 16px 10px 14px;font-size:14px;display:flex;align-items:center;gap:10px;z-index:9;
+  transition:opacity .25s,transform .35s cubic-bezier(.2,.7,.2,1);max-width:calc(100vw - 32px)}
+.toast::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--neon);flex:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (min-width:640px){ .wrap{padding-top:calc(40px + env(safe-area-inset-top,0px))} }
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media print{.tools,.toast,.dec{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Gradazione<br>e zuccheri</h1>
+    <p class="sub">Convertitore, rialzo e diluizione</p>
+  </div>
+  <div class="tools">
+    <button class="round" id="btnTheme" type="button" aria-label="Cambia tonalità: chiaro o scuro" title="Chiaro o scuro">
+      <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 2a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+    </button>
+    <button class="round" id="btnNeon" type="button" aria-label="Cambia colore fluo" title="Cambia colore fluo"><span class="swatch"></span></button>
+  </div>
+</header>
+
+<section class="conv" aria-label="Convertitore">
+  <div class="grp">
+    <span class="lab" id="labHo">Ho</span>
+    <div class="chips" id="chipsFrom" role="group" aria-labelledby="labHo"></div>
+  </div>
+  <div class="input-row">
+    <div class="field">
+      <input id="inVal" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Valore da convertire" placeholder="0">
+      <span class="suf" id="inSuf"></span>
+    </div>
+    <button class="round" id="btnSwap" type="button" aria-label="Inverti le due unità" title="Inverti">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v13M6 16l-3-3M6 16l3-3M14 17V4M14 4l-3 3M14 4l3 3"/></svg>
+    </button>
+  </div>
+  <div class="grp">
+    <span class="lab" id="labVoglio">Voglio</span>
+    <div class="chips" id="chipsTo" role="group" aria-labelledby="labVoglio"></div>
+  </div>
+</section>
+
+<section class="hero" aria-live="polite">
+  <div class="readout">
+    <div class="r-head">
+      <span class="r-cap" id="rCap">Risultato</span>
+      <div class="dec" role="group" aria-label="Decimali visualizzati">
+        <span>decimali</span>
+        <button type="button" id="decMinus" aria-label="Meno decimali">−</button>
+        <output id="decOut">2</output>
+        <button type="button" id="decPlus" aria-label="Più decimali">+</button>
+      </div>
+    </div>
+    <div class="r-val" id="rVal">–</div>
+    <div class="r-unit"><b id="rUnit"></b><span id="rSub"></span></div>
+    <div class="r-dens"><span>densità</span><span class="num" id="rDens">–</span><span>g/mL a 20 °C</span></div>
+    <div class="gauge" id="gauge" aria-hidden="true"></div>
+    <div class="g-scale"><span>0</span><span class="mid" id="gMid"></span><span>20 % vol</span></div>
+    <p class="r-note" id="rNote"></p>
+  </div>
+</section>
+
+<section class="factor" aria-labelledby="fCap">
+  <p class="cap" id="fCap">Fattore zuccheri e alcol, vale per tutta la pagina: g/L di zuccheri per 1% vol</p>
+  <div class="seg" role="radiogroup" aria-label="Fattore zuccheri e alcol">
+    <button type="button" role="radio" data-mode="oiv" aria-checked="true"><b>Standard OIV</b><span id="fOiv"></span></button>
+    <button type="button" role="radio" data-mode="alta" aria-checked="false"><b>Resa piena</b><span id="fAlta"></span></button>
+  </div>
+</section>
+
+<div class="accs">
+
+<details class="acc" id="accAll" open>
+  <summary><span><span class="s-t">Tutte le unità</span><span class="s-h">Tocca una riga per copiare il valore</span></span><span class="ico"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></summary>
+  <div class="acc-body">
+    <div class="rows" id="allRows"></div>
+    <div class="legend"><span><i class="i1"></i>unità di partenza</span><span><i class="i2"></i>unità richiesta</span></div>
+  </div>
+</details>
+
+<details class="acc" id="accRialzo">
+  <summary><span><span class="s-t">Rialzo zuccherino</span><span class="s-h">Quanto zucchero aggiungere per arrivare al grado</span></span><span class="ico"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></summary>
+  <div class="acc-body">
+    <div class="fgrid">
+      <div class="fld"><label for="rVol">Volume in hL</label><input id="rVol" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="rBabo">°Babo attuale</label><input id="rBabo" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld full">
+        <span class="flab" id="rTLab">Obiettivo finale</span>
+        <div class="chips flat" id="rTChips" role="group" aria-labelledby="rTLab" style="margin-bottom:10px"></div>
+        <input id="rTarget" inputmode="decimal" autocomplete="off" aria-labelledby="rTLab">
+      </div>
+      <div class="fld full">
+        <span class="flab" id="rPLab">Prodotto</span>
+        <div class="chips flat" id="rPChips" role="group" aria-labelledby="rPLab"></div>
+      </div>
+      <div class="fld full" id="rMcrBox" hidden>
+        <label for="rMcr">Zuccheri nel MCR, in g/L (dalla scheda tecnica)</label><input id="rMcr" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+    <div class="out" id="rOut"></div>
+    <p class="note">Stima: il saccarosio si idrolizza in zuccheri invertiti (1 g dà 1,0526 g) e fa crescere il volume di circa 0,63 L per kg. Il MCR è miscelato con volumi additivi.</p>
+  </div>
+</details>
+
+<details class="acc" id="accDil">
+  <summary><span><span class="s-t">Diluizione con acqua</span><span class="s-h">Quanta acqua per scendere di grado e come cambiano i parametri</span></span><span class="ico"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></summary>
+  <div class="acc-body">
+    <div class="fgrid">
+      <div class="fld full">
+        <span class="flab" id="dKLab">Si diluisce</span>
+        <div class="chips flat" id="dKChips" role="group" aria-labelledby="dKLab"></div>
+      </div>
+      <div class="fld"><label for="dVol">Volume in hL</label><input id="dVol" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld" id="dA0Box"><label for="dA0">Alcol attuale, % vol</label><input id="dA0" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld" id="dBaboBox" hidden><label for="dBabo">°Babo del mosto</label><input id="dBabo" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld full"><label for="dA1" id="dA1Lab">Alcol obiettivo, % vol</label><input id="dA1" inputmode="decimal" autocomplete="off"></div>
+
+      <div class="grp-t">Acqua</div>
+      <div class="fld full">
+        <span class="flab" id="dWLab">Tipo di acqua</span>
+        <div class="chips flat" id="dWChips" role="group" aria-labelledby="dWLab"></div>
+      </div>
+      <div class="fld"><label for="dHco3">Bicarbonati, mg/L</label><input id="dHco3" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dRes">Residuo fisso, mg/L</label><input id="dRes" inputmode="decimal" autocomplete="off"></div>
+
+      <div class="grp-t">Parametri, facoltativi</div>
+      <div class="fld"><label for="dPh">pH</label><input id="dPh" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dTa">Acidità totale, g/L tartarico</label><input id="dTa" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dMal">Acido malico, g/L</label><input id="dMal" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dLac">Acido lattico, g/L</label><input id="dLac" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dVa">Acidità volatile, g/L acetico</label><input id="dVa" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld" id="dSugBox"><label for="dSug">Zuccheri, g/L</label><input id="dSug" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dExt">Estratto secco, g/L</label><input id="dExt" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dSo2f">SO₂ libera, mg/L</label><input id="dSo2f" inputmode="decimal" autocomplete="off"></div>
+      <div class="fld"><label for="dSo2t">SO₂ totale, mg/L</label><input id="dSo2t" inputmode="decimal" autocomplete="off"></div>
+    </div>
+    <div class="out" id="dOut"></div>
+    <p class="note">Nell'UE l'aggiunta di acqua è ammessa solo per esigenze tecniche specifiche; altri paesi fissano limiti propri. Verifica la normativa del tuo caso. Il pH è una stima: misuralo sempre dopo la diluizione.</p>
+  </div>
+</details>
+
+<details class="acc" id="accHow">
+  <summary><span><span class="s-t">Come è calcolato</span><span class="s-h">Passaggi, formule e fonti</span></span><span class="ico"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></summary>
+  <div class="acc-body">
+    <h3 class="sub-h" style="margin-top:4px">Conversione, con i valori inseriti</h3>
+    <ol class="steps" id="steps"></ol>
+    <h3 class="sub-h">I due valori del fattore</h3>
+    <ul class="names">
+      <li><b>Standard OIV</b>Il coefficiente ufficiale della risoluzione OIV-OENO 466-2012: alcol % vol = zuccheri g/L × 0,05943. Equivale a 16,827 g/L di zuccheri per ogni 1% vol.</li>
+      <li><b>Resa piena</b>Il punto a metà tra lo standard OIV e il valore più basso trovato in letteratura (16,5 g/L): 16,663 g/L per 1% vol. Con gli stessi zuccheri dà un po' più di alcol.</li>
+    </ul>
+    <h3 class="sub-h">Diluizione: le ipotesi</h3>
+    <ul class="names">
+      <li><b>Acqua e volumi</b>Rapporto di diluizione f = obiettivo ÷ grado attuale. Acqua = volume × (grado attuale ÷ obiettivo − 1). I volumi si sommano: la piccola contrazione alcol-acqua non è modellata.</li>
+      <li><b>Concentrazioni</b>Zuccheri, acidi, acidità volatile e SO₂ si moltiplicano per f. L'estratto vale f × estratto + (1 − f) × residuo fisso dell'acqua.</li>
+      <li><b>Acidità totale</b>AT dopo = f × AT − (1 − f) × alcalinità dell'acqua. I bicarbonati (mg/L ÷ 61,017 = meq/L) neutralizzano un po' di acidità.</li>
+      <li><b>pH</b>Bilancio di carica con tartarico (pKa 3,04 e 4,37), malico (3,40 e 5,20) e lattico (3,86). L'acido tartarico equivalente si ricava da AT, pH, malico e lattico; i cationi netti sono tarati sul pH misurato. Dopo la diluizione si risolve di nuovo il pH, con l'alcalinità dell'acqua come base in più.</li>
+      <li><b>SO₂ molecolare</b>SO₂ libera ÷ (1 + 10^(pH − 1,81)).</li>
+      <li><b>Limiti</b>Non sono considerati forza ionica, effetto dell'etanolo sulle costanti, stabilità tartarica e CO₂ disciolta: lo spostamento reale del pH può essere un po' più ampio.</li>
+    </ul>
+    <h3 class="sub-h">Fonti</h3>
+    <ul class="src">
+      <li><a href="https://www.oiv.int/node/3299/download/pdf" target="_blank" rel="noopener">OIV-OENO 466-2012, tabella II</a><span>Brix, densità a 20 °C, zuccheri in g/L e g/kg, alcol potenziale</span></li>
+      <li><a href="https://glossary.wein.plus/klosterneuburger-mostwaage-2" target="_blank" rel="noopener">Klosterneuburger Mostwaage (wein.plus)</a><span>Definizione del grado KMW, che corrisponde al grado Babo</span></li>
+      <li><a href="https://pages.hannainst.com/hi96814-digital-refractometer-for-brix-oechsle-and-kmw-analysis-in-wine.html" target="_blank" rel="noopener">Hanna HI96814, scale Brix, Oechsle e KMW</a><span>Relazione tra grado KMW e densità del mosto</span></li>
+      <li><a href="https://wineland.co.za/the-conversion-of-sugar-to-alcohol" target="_blank" rel="noopener">Wineland, la conversione degli zuccheri in alcol</a><span>Intervallo di 16,5-17,2 g/L per 1% vol secondo il lievito</span></li>
+      <li><a href="https://www.vitisphere.com/news-96886-how-diluting-winemaking-aids-and-legal-requirements-is-both-necessary-and-challenging.html" target="_blank" rel="noopener">Vitisphere, acqua nelle pratiche enologiche</a><span>Regole sull'aggiunta di acqua in UE e in altri paesi</span></li>
+      <li><a href="https://www.oiv.int/node/2624/download/pdf" target="_blank" rel="noopener">OIV, Codice delle pratiche enologiche, II.6.1.5</a><span>Aggiunta di acqua: definizione e prescrizioni</span></li>
+      <li><a href="https://www.beverfood.com/acqua/acqua-panna.html" target="_blank" rel="noopener">Analisi di un'acqua oligominerale (Acqua Panna)</a><span>Bicarbonati 106 mg/L, residuo fisso 142 mg/L, pH 7,9</span></li>
+      <li><a href="https://www.beverfood.com/acqua/fontesana.html" target="_blank" rel="noopener">Analisi di un'acqua mineralizzata (Fontesana)</a><span>Bicarbonati 433 mg/L, residuo fisso 540 mg/L, pH 7,41</span></li>
+    </ul>
+    <p class="note">La tavola OIV copre 10-40 °Brix in questa pagina e dà la densità con 4 decimali: la risoluzione è di circa 0,01 °Brix. Fuori tavola il valore è estrapolato in modo lineare e viene segnalato.</p>
+  </div>
+</details>
+
+</div>
+
+<footer>
+  <svg viewBox="0 0 30 30" aria-hidden="true"><g id="sigDots"></g></svg>
+  <div><b>Alessandro De Guidi wine consulting</b><span>Tavole OIV-OENO 466-2012. Valori indicativi, da confermare con l'analisi di laboratorio.</span></div>
+</footer>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/*ENGINE-START*/
+/* Tavola II OIV-OENO 466-2012, saccarosio 10,0-40,0 % m/m a passi di 0,1.
+   DENS: densità a 20 °C x10000; GL: zuccheri in g/L x10; GKG: zuccheri in g/kg x10. */
+const DENS_I=[10391,10395,10399,10403,10407,10411,10415,10419,10423,10427,10431,10436,10440,10444,10448,10452,10456,10460,10464,10468,10472,10477,10481,10485,10489,10493,10497,10501,10506,10510,10514,10518,10522,10527,10531,10535,10539,10543,10548,10552,10556,10560,10564,10569,10573,10577,10581,10586,10590,10594,10598,10603,10607,10611,10616,10620,10624,10628,10633,10637,10641,10646,10650,10654,10659,10663,10667,10672,10676,10680,10685,10689,10693,10698,10702,10707,10711,10715,10720,10724,10729,10733,10737,10742,10746,10751,10755,10760,10764,10768,10773,10777,10782,10786,10791,10795,10800,10804,10809,10813,10818,10822,10827,10831,10836,10840,10845,10849,10854,10858,10863,10867,10872,10876,10881,10885,10890,10895,10899,10904,10908,10913,10917,10922,10927,10931,10936,10940,10945,10950,10954,10959,10964,10968,10973,10977,10982,10987,10991,10996,11001,11005,11010,11015,11019,11024,11029,11033,11038,11043,11047,11052,11057,11062,11066,11071,11076,11080,11085,11090,11095,11099,11104,11109,11114,11118,11123,11128,11133,11138,11142,11147,11152,11157,11161,11166,11171,11176,11181,11185,11190,11195,11200,11205,11210,11214,11219,11224,11229,11234,11239,11244,11248,11253,11258,11263,11268,11273,11278,11283,11287,11292,11297,11302,11307,11312,11317,11322,11327,11332,11337,11342,11346,11351,11356,11361,11366,11371,11376,11381,11386,11391,11396,11401,11406,11411,11416,11421,11426,11431,11436,11441,11446,11451,11456,11461,11466,11471,11476,11481,11486,11491,11496,11501,11507,11512,11517,11522,11527,11532,11537,11542,11547,11552,11557,11563,11568,11573,11578,11583,11588,11593,11598,11603,11609,11614,11619,11624,11629,11634,11640,11645,11650,11655,11660,11665,11671,11676,11681,11686,11691,11697,11702,11707,11712,11717,11723,11728,11733,11738,11744,11749,11754,11759,11765,11770,11775,11780,11786,11791,11796];
+const GL_I=[822,833,843,854,865,875,886,896,907,918,928,939,950,960,971,982,993,1003,1014,1025,1035,1046,1057,1068,1078,1089,1100,1111,1122,1132,1143,1154,1165,1176,1187,1197,1208,1219,1230,1241,1252,1263,1274,1285,1296,1306,1317,1328,1339,1350,1361,1372,1383,1394,1405,1416,1427,1438,1449,1460,1471,1482,1493,1505,1516,1527,1538,1549,1560,1571,1582,1593,1604,1616,1627,1638,1649,1660,1671,1683,1694,1705,1716,1727,1739,1750,1761,1772,1784,1795,1806,1817,1829,1840,1851,1862,1874,1885,1896,1908,1919,1930,1942,1953,1964,1976,1987,1998,2010,2021,2033,2044,2055,2067,2078,2090,2101,2113,2124,2136,2147,2159,2170,2182,2193,2205,2216,2228,2239,2251,2262,2274,2285,2297,2308,2320,2332,2343,2355,2366,2378,2390,2401,2413,2425,2436,2448,2460,2471,2483,2495,2506,2518,2530,2541,2553,2565,2577,2588,2600,2612,2624,2636,2647,2659,2671,2683,2695,2706,2718,2730,2742,2754,2766,2778,2789,2801,2813,2825,2837,2849,2861,2873,2885,2897,2909,2921,2933,2945,2957,2969,2981,2993,3005,3017,3029,3041,3053,3065,3077,3089,3101,3113,3126,3138,3150,3162,3174,3186,3198,3211,3223,3235,3247,3259,3272,3284,3296,3308,3321,3333,3345,3357,3370,3382,3394,3407,3419,3431,3444,3456,3468,3481,3493,3506,3518,3530,3543,3555,3568,3580,3592,3605,3617,3630,3642,3655,3667,3680,3692,3705,3718,3730,3743,3755,3768,3780,3793,3806,3818,3831,3844,3856,3869,3881,3894,3907,3920,3932,3945,3958,3970,3983,3996,4009,4021,4034,4047,4060,4073,4086,4098,4111,4124,4137,4150,4163,4176,4188,4201,4214,4227,4240,4253,4266,4279,4292,4305,4318,4331,4344];
+const GKG_I=[791,801,811,821,831,841,850,860,870,880,890,900,910,920,929,939,949,959,969,979,989,999,1008,1018,1028,1038,1048,1058,1068,1078,1087,1097,1107,1117,1127,1137,1147,1156,1166,1176,1186,1196,1206,1216,1225,1235,1245,1255,1265,1275,1284,1294,1304,1314,1324,1334,1343,1353,1363,1373,1383,1393,1402,1412,1422,1432,1442,1451,1461,1471,1481,1491,1500,1510,1520,1530,1540,1549,1559,1569,1579,1589,1598,1608,1618,1628,1637,1647,1657,1667,1676,1686,1696,1706,1715,1725,1735,1745,1754,1764,1774,1784,1793,1803,1813,1823,1832,1842,1852,1861,1871,1881,1891,1900,1910,1920,1929,1939,1949,1959,1968,1978,1988,1997,2007,2017,2026,2036,2046,2055,2065,2075,2084,2094,2104,2113,2123,2133,2142,2152,2162,2171,2181,2191,2200,2210,2220,2229,2239,2248,2258,2268,2277,2287,2297,2306,2316,2325,2335,2345,2354,2364,2373,2383,2393,2402,2412,2421,2431,2441,2450,2460,2469,2479,2489,2498,2508,2517,2527,2536,2546,2555,2565,2575,2584,2594,2603,2613,2622,2632,2642,2651,2661,2670,2680,2689,2699,2708,2718,2727,2737,2746,2756,2765,2775,2785,2794,2804,2813,2823,2832,2842,2851,2861,2870,2880,2889,2899,2908,2918,2927,2937,2946,2956,2965,2975,2984,2994,3003,3013,3022,3032,3041,3050,3060,3069,3079,3088,3098,3107,3117,3126,3136,3145,3155,3164,3174,3183,3192,3202,3211,3221,3230,3240,3249,3259,3268,3278,3287,3296,3306,3315,3325,3334,3344,3353,3363,3372,3381,3391,3400,3410,3419,3429,3438,3447,3457,3466,3476,3485,3494,3504,3513,3523,3532,3542,3551,3560,3570,3579,3589,3598,3607,3617,3626,3636,3645,3654,3664,3673,3683];
+const DENS=DENS_I.map(v=>v/10000), GL=GL_I.map(v=>v/10), GKG=GKG_I.map(v=>v/10);
+const N=DENS.length, B0=10, BS=0.1;
+
+const F_OIV=1/0.05943;              /* g/L di zuccheri per 1 % vol, coefficiente OIV */
+const F_LOW=16.5;                   /* valore più basso in letteratura */
+const F_ALTA=(F_OIV+F_LOW)/2;       /* punto intermedio: Resa piena */
+const factor=m=>m==='alta'?F_ALTA:F_OIV;
+
+const SUC_INV=1052.63;              /* g di zuccheri invertiti per kg di saccarosio */
+const SUC_VOL=0.63;                 /* L di volume per kg di saccarosio sciolto (stima) */
+
+function slopeEnd(arr,end){return end==='lo'?(arr[10]-arr[0])/10:(arr[N-1]-arr[N-11])/10}
+function valAt(arr,idx){
+  if(idx<0) return arr[0]+idx*slopeEnd(arr,'lo');
+  if(idx>N-1) return arr[N-1]+(idx-(N-1))*slopeEnd(arr,'hi');
+  const i=Math.min(Math.floor(idx),N-2), t=idx-i;
+  return arr[i]+t*(arr[i+1]-arr[i]);
+}
+function idxOf(arr,y){
+  if(y<arr[0]) return (y-arr[0])/slopeEnd(arr,'lo');
+  if(y>arr[N-1]) return (N-1)+(y-arr[N-1])/slopeEnd(arr,'hi');
+  let lo=0,hi=N-1;
+  while(hi-lo>1){const m=(lo+hi)>>1; if(arr[m]<=y) lo=m; else hi=m}
+  return lo+(y-arr[lo])/(arr[lo+1]-arr[lo]);
+}
+const brixOfIdx=i=>B0+i*BS;
+const idxOfBrix=b=>(b-B0)/BS;
+
+/* grado Babo (KMW) <-> densità */
+const poly=k=>k*(4.54+0.022*k);
+const densOfBabo=k=>1+poly(k)/1000;
+const baboOfDens=d=>{const x=(d-1)*1000;return (-4.54+Math.sqrt(4.54*4.54+4*0.022*x))/(2*0.022)};
+
+function densFrom(unit,v,mode){
+  switch(unit){
+    case 'babo': return densOfBabo(v);
+    case 'brix': return valAt(DENS,idxOfBrix(v));
+    case 'gl':   return valAt(DENS,idxOf(GL,v));
+    case 'gkg':  return valAt(DENS,idxOf(GKG,v));
+    case 'abv':  return valAt(DENS,idxOf(GL,v*factor(mode)));
+  }
+  return NaN;
+}
+function derive(d){
+  const idx=idxOf(DENS,d);
+  let gl=valAt(GL,idx);
+  const neg=gl<0; if(neg) gl=0;
+  return {d, idx, brix:brixOfIdx(idx), gl, gkg:Math.max(0,valAt(GKG,idx)), babo:baboOfDens(d),
+          abvOiv:gl/F_OIV, abvAlta:gl/F_ALTA,
+          out: idx<0?'low':(idx>N-1?'high':null), neg};
+}
+const sugarOfBabo=k=>derive(densOfBabo(k)).gl;
+const baboOfSugar=g=>baboOfDens(valAt(DENS,idxOf(GL,g)));
+
+/* rialzo: restituisce i risultati o un messaggio d'errore */
+function rialzoCalc(o){
+  const V0=o.volHl*100;
+  const S0=sugarOfBabo(o.babo);
+  let ST;
+  if(o.tType==='abv') ST=o.target*factor(o.mode); else ST=sugarOfBabo(o.target);
+  const dS=ST-S0;
+  if(!(V0>0)) return {err:'Inserisci il volume.'};
+  if(dS<=0) return {err:'L\'obiettivo è già raggiunto: gli zuccheri attuali bastano.',S0,ST};
+  let qty,unit,V1;
+  if(o.prod==='suc'){
+    qty=V0*dS/(SUC_INV-SUC_VOL*ST); unit='kg'; V1=V0+SUC_VOL*qty;
+  }else{
+    if(!(o.mcr>ST)) return {err:'Il MCR deve avere più zuccheri dell\'obiettivo (g/L).',S0,ST};
+    qty=V0*dS/(o.mcr-ST); unit='L'; V1=V0+qty;
+  }
+  return {S0,ST,dS,qty,unit,V0,V1,perHl:qty/o.volHl,
+          baboEnd:baboOfSugar(ST), abvEnd:ST/factor(o.mode), abv0:S0/factor(o.mode)};
+}
+
+/* ---- diluizione con acqua ---- */
+const PKA={T:[3.04,4.37],M:[3.40,5.20],L:[3.86]};
+const KA={T:PKA.T.map(p=>Math.pow(10,-p)),M:PKA.M.map(p=>Math.pow(10,-p)),L:PKA.L.map(p=>Math.pow(10,-p))};
+const MMOL={T:150.09,M:134.09,L:90.08};      /* g/mol */
+const EQ_T=75.04;                            /* g per equivalente di acido tartarico */
+const HCO3_MM=61.017;                        /* g/mol */
+const PKA_SO2=1.81;                          /* prima dissociazione dell'SO2 */
+function nChg(k,pH){
+  const h=Math.pow(10,-pH);
+  if(k==='L') return KA.L[0]/(KA.L[0]+h);
+  const a=KA[k][0], b=KA[k][1];
+  return (a*h+2*a*b)/(h*h+a*h+a*b);
+}
+const N7={T:nChg('T',7),M:nChg('M',7),L:nChg('L',7)};
+/* ricava acido tartarico equivalente e cationi netti dai valori misurati */
+function acidSystem(pH,taG,mal,lac){
+  const h=Math.pow(10,-pH)*1000;                         /* meq/L */
+  const cM=mal/MMOL.M*1000, cL=lac/MMOL.L*1000;          /* mmol/L */
+  const TA=taG/EQ_T*1000;                                /* meq/L */
+  const rest=TA-h-cM*(N7.M-nChg('M',pH))-cL*(N7.L-nChg('L',pH));
+  const cT=rest/(N7.T-nChg('T',pH));
+  if(!(cT>=0)) return {err:'L\'acidità totale è troppo bassa rispetto ad acido malico e lattico.'};
+  const Cb=cT*nChg('T',pH)+cM*nChg('M',pH)+cL*nChg('L',pH)-h;
+  return {cT,cM,cL,Cb,TA};
+}
+function solvePH(s,f,alk){
+  const Cb2=f*s.Cb+(1-f)*alk;
+  const G=pH=>{
+    const h=Math.pow(10,-pH)*1000, oh=Math.pow(10,pH-14)*1000;
+    return f*(s.cT*nChg('T',pH)+s.cM*nChg('M',pH)+s.cL*nChg('L',pH))+oh-Cb2-h;
+  };
+  let lo=0.5,hi=11;
+  for(let i=0;i<80;i++){const m=(lo+hi)/2; if(G(m)>0) hi=m; else lo=m}
+  return (lo+hi)/2;
+}
+const so2Mol=(free,pH)=>free/(1+Math.pow(10,pH-PKA_SO2));
+
+function dilutionCalc(o){
+  const p=o.p||{}, w=o.water||{}, mosto=o.kind==='mosto';
+  if(!(o.V>0)) return {err:'Inserisci il volume da diluire.'};
+  let A0,S0=null;
+  if(mosto){
+    if(o.babo==null) return {err:'Inserisci il °Babo del mosto.'};
+    S0=sugarOfBabo(o.babo); A0=S0/factor(o.mode);
+    if(!(A0>0)) return {err:'A questo Babo il mosto non contiene zuccheri.'};
+  }else A0=o.A0;
+  const A1=o.A1;
+  if(!(A0>0)||!(A1>0)) return {err:'Inserisci grado attuale e grado obiettivo.'};
+  if(A1>=A0) return {err:'Il grado obiettivo deve essere più basso di quello attuale.'};
+  const f=A1/A0, W=o.V*(A0/A1-1), Vt=o.V+W;
+  const alk=(w.hco3||0)/HCO3_MM;                          /* meq/L */
+  const rows=[], add=(k,l,u,b,a,d,em)=>rows.push({k,l,u,b,a,d,em:!!em});
+  add('abv',mosto?'Alcol potenziale':'Alcol','% vol',A0,A1,2,true);
+  if(mosto){
+    add('sug','Zuccheri','g/L',S0,S0*f,1);
+    add('babo','Grado Babo','°Babo',o.babo,baboOfSugar(S0*f),2);
+  }else if(p.sug!=null) add('sug','Zuccheri','g/L',p.sug,p.sug*f,1);
+  let phA=null;
+  if(p.ta!=null&&p.pH!=null){
+    const s=acidSystem(p.pH,p.ta,p.mal||0,p.lac||0);
+    if(s.err) return {err:s.err};
+    phA=solvePH(s,f,alk);
+    add('ph','pH','',p.pH,phA,2,true);
+  }
+  if(p.ta!=null){
+    const taMeq=p.ta/EQ_T*1000, ta2=Math.max(0,f*taMeq-(1-f)*alk)/1000*EQ_T;
+    add('ta','Acidità totale','g/L',p.ta,ta2,2,true);
+  }
+  if(p.mal!=null) add('mal','Acido malico','g/L',p.mal,p.mal*f,2);
+  if(p.lac!=null) add('lac','Acido lattico','g/L',p.lac,p.lac*f,2);
+  if(p.va!=null) add('va','Acidità volatile','g/L',p.va,p.va*f,2);
+  if(p.ext!=null) add('ext','Estratto secco','g/L',p.ext,f*p.ext+(1-f)*(w.res||0)/1000,1);
+  if(p.so2f!=null) add('so2f','SO₂ libera','mg/L',p.so2f,p.so2f*f,1);
+  if(p.so2t!=null) add('so2t','SO₂ totale','mg/L',p.so2t,p.so2t*f,1);
+  if(p.so2f!=null&&p.pH!=null&&phA!=null) add('so2m','SO₂ molecolare','mg/L',so2Mol(p.so2f,p.pH),so2Mol(p.so2f*f,phA),3);
+  return {f,W,Vt,A0,wpct:W/Vt*100,perHl:W/o.V*100,rows,hasPH:phA!=null};
+}
+/*ENGINE-END*/
+
+/* ---------- utilità ---------- */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const LS={
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+const nfc={};
+function fmt(x,dec){
+  if(x==null||!isFinite(x)) return '–';
+  if(Math.abs(x)<Math.pow(10,-dec)/2) x=0;
+  const nf=nfc[dec]||(nfc[dec]=new Intl.NumberFormat('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec,useGrouping:false}));
+  return nf.format(x);
+}
+function sgn(x,dec){
+  if(x==null||!isFinite(x)) return '–';
+  const s=fmt(Math.abs(x),dec);
+  if(Number(s.replace(',','.'))===0) return '0';
+  return (x<0?'−':'+')+s;
+}
+function parseNum(s){
+  if(s==null) return null;
+  s=String(s).trim().replace(/\s/g,'').replace(',','.');
+  if(s===''||s==='-'||s==='.') return null;
+  const v=Number(s); return isFinite(v)?v:null;
+}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let toastT;
+function toast(msg){
+  const el=$('#toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),1700);
+}
+function copyText(txt,msg){
+  const done=()=>toast(msg||'Copiato');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,()=>fallback())}
+  else fallback();
+  function fallback(){
+    const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); done();
+  }
+}
+
+/* ---------- impostazioni ---------- */
+const ST=Object.assign({from:'babo',to:'brix',val:'18',mode:'oiv',dec:2,neon:0,theme:null},LS.get('gz.settings',{}));
+const save=()=>LS.set('gz.settings',ST);
+const NEONS=[{n:'Arancio',c:'#FF5A00'},{n:'Lime',c:'#C6FF00'},{n:'Ciano',c:'#00E5FF'},{n:'Fucsia',c:'#FF2BB4'},{n:'Viola',c:'#9B6BFF'}];
+const UNITS={
+  babo:{short:'°Babo',sub:'',name:'gradi Babo',get:a=>a.babo},
+  brix:{short:'°Brix',sub:'',name:'gradi Brix',get:a=>a.brix},
+  gl:{short:'g/L',sub:'zuccheri',name:'zuccheri in g/L',get:a=>a.gl},
+  gkg:{short:'g/kg',sub:'zuccheri',name:'zuccheri in g/kg',get:a=>a.gkg},
+  abv:{short:'% vol',sub:'alcol',name:'alcol potenziale',get:(a,m)=>m==='alta'?a.abvAlta:a.abvOiv}
+};
+const UKEYS=['babo','brix','gl','gkg','abv'];
+const MODENAME={oiv:'Standard OIV',alta:'Resa piena'};
+
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const m=document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content',t==='dark'?'#000000':'#ffffff');
+}
+function applyNeon(i){document.documentElement.style.setProperty('--neon',NEONS[i].c)}
+const curTheme=()=>document.documentElement.getAttribute('data-theme');
+
+/* ---------- convertitore ---------- */
+function buildChips(el,key,onPick){
+  el.innerHTML='';
+  UKEYS.forEach(k=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip';
+    b.innerHTML='<span>'+UNITS[k].short+'</span><small>'+UNITS[k].sub+'</small>';
+    b.setAttribute('aria-label',UNITS[k].name); b.dataset.k=k;
+    b.setAttribute('aria-pressed',ST[key]===k?'true':'false');
+    b.addEventListener('click',()=>{ST[key]=k;save();onPick()});
+    el.appendChild(b);
+  });
+}
+function refreshChips(){
+  [['#chipsFrom','from'],['#chipsTo','to']].forEach(([sel,key])=>{
+    $$(sel+' .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===ST[key]?'true':'false'));
+  });
+}
+const gaugeEl=$('#gauge');
+for(let i=0;i<40;i++){gaugeEl.appendChild(document.createElement('i'))}
+const gDots=Array.from(gaugeEl.children);
+let firstGauge=true;
+function setGauge(abv){
+  const n=abv==null?0:Math.max(0,Math.min(40,Math.round(abv/0.5)));
+  gDots.forEach((d,i)=>{
+    if(firstGauge&&!reduce) d.style.transitionDelay=(i*18)+'ms';
+    d.classList.toggle('on',i<n);
+  });
+  if(firstGauge){firstGauge=false; setTimeout(()=>gDots.forEach(d=>d.style.transitionDelay=''),1300)}
+}
+function fitVal(){
+  const el=$('#rVal'); let size=Math.min(112,Math.max(60,Math.round(el.parentElement.clientWidth*0.27)));
+  el.style.fontSize=size+'px';
+  while(el.scrollWidth>el.clientWidth+1&&size>30){size-=3;el.style.fontSize=size+'px'}
+}
+function bracketText(arr,idx){
+  const i=Math.max(0,Math.min(N-2,Math.floor(idx)));
+  return {i,b1:brixOfIdx(i),b2:brixOfIdx(i+1),v1:arr[i],v2:arr[i+1]};
+}
+function renderConv(){
+  const v=parseNum(ST.val), dec=ST.dec;
+  $('#decOut').textContent=dec;
+  const to=UNITS[ST.to], from=UNITS[ST.from];
+  $('#inSuf').textContent=from.short;
+  $('#rCap').textContent='Risultato in '+to.short;
+  $('#rUnit').textContent=to.short;
+  $('#rSub').textContent=ST.to==='abv'?to.name+', '+MODENAME[ST.mode]:to.name;
+  const rows=$('#allRows');
+  if(v==null){
+    $('#rVal').textContent='–'; $('#rDens').textContent='–'; $('#rNote').textContent='Inserisci un valore da convertire.';
+    $('#gMid').textContent=''; setGauge(null); rows.innerHTML=''; $('#steps').innerHTML=''; fitVal(); return;
+  }
+  const d=densFrom(ST.from,v,ST.mode), A=derive(d);
+  const val=to.get(A,ST.mode);
+  $('#rVal').textContent=fmt(val,dec);
+  $('#rDens').textContent=fmt(A.d,6);
+  const abv=ST.mode==='alta'?A.abvAlta:A.abvOiv;
+  setGauge(abv);
+  $('#gMid').textContent=fmt(abv,2)+' % vol';
+  let note='';
+  if(A.out==='low') note='Sotto 10 °Brix: fuori dalla tavola OIV, valore estrapolato.';
+  else if(A.out==='high') note='Sopra 40 °Brix: fuori dalla tavola OIV, valore estrapolato.';
+  else if(A.neg) note='Zuccheri praticamente assenti a questa densità.';
+  $('#rNote').textContent=note;
+  fitVal();
+
+  const defs=[
+    {k:'babo',l:'Gradi Babo',v:A.babo,d:dec,u:'°Babo'},
+    {k:'brix',l:'Gradi Brix',v:A.brix,d:dec,u:'°Brix'},
+    {k:'dens',l:'Densità',s:'a 20 °C',v:A.d,d:6,u:'g/mL'},
+    {k:'gl',l:'Zuccheri per volume',s:'grammi per litro di mosto',v:A.gl,d:dec,u:'g/L'},
+    {k:'gkg',l:'Zuccheri per massa',s:'grammi per kg di mosto',v:A.gkg,d:dec,u:'g/kg'},
+    {k:'abv:oiv',l:'Alcol potenziale, Standard OIV',s:'fattore '+fmt(F_OIV,3)+' g/L per 1% vol',v:A.abvOiv,d:dec,u:'% vol'},
+    {k:'abv:alta',l:'Alcol potenziale, Resa piena',s:'fattore '+fmt(F_ALTA,3)+' g/L per 1% vol',v:A.abvAlta,d:dec,u:'% vol'}
+  ];
+  const isOut=k=>{
+    if(k==='abv:oiv') return ST.to==='abv'&&ST.mode==='oiv';
+    if(k==='abv:alta') return ST.to==='abv'&&ST.mode==='alta';
+    return k===ST.to;
+  };
+  const isIn=k=>{
+    if(k==='abv:oiv') return ST.from==='abv'&&ST.mode==='oiv';
+    if(k==='abv:alta') return ST.from==='abv'&&ST.mode==='alta';
+    return k===ST.from;
+  };
+  rows.innerHTML=defs.map(r=>{
+    const txt=fmt(r.v,r.d);
+    return '<button type="button" class="row'+(isOut(r.k)?' is-out':'')+(isIn(r.k)?' is-in':'')+'" data-copy="'+txt+'" aria-label="Copia '+r.l+' '+txt+' '+r.u+'">'
+      +'<span class="l">'+r.l+(r.s?'<small>'+r.s+'</small>':'')+'</span><span class="v">'+txt+'</span><span class="u">'+r.u+'</span></button>';
+  }).join('');
+  $$('#allRows .row').forEach(b=>b.addEventListener('click',()=>copyText(b.dataset.copy,'Copiato '+b.dataset.copy)));
+  renderSteps(v,d,A);
+}
+function renderSteps(v,d,A){
+  const f=factor(ST.mode), li=[];
+  const idx=A.idx;
+  if(ST.from==='babo'){
+    li.push('<li><h4>Densità dal grado Babo</h4><p>La formula del grado Babo (KMW) lega il grado alla densità del mosto.</p>'
+      +'<code class="big">d = 1 + K · (4,54 + 0,022 · K) / 1000<br>d = 1 + '+fmt(v,3)+' · '+fmt(4.54+0.022*v,5)+' / 1000 = '+fmt(d,6)+'</code></li>');
+  }else if(ST.from==='brix'){
+    const b=bracketText(DENS,idxOfBrix(v));
+    li.push('<li><h4>Densità dalla tavola OIV</h4><p>'+fmt(v,3)+' °Brix cade tra '+fmt(b.b1,1)+' e '+fmt(b.b2,1)+' °Brix, dove la densità vale '+fmt(b.v1,4)+' e '+fmt(b.v2,4)+' g/mL.</p>'
+      +'<code class="big">d = '+fmt(d,6)+' g/mL</code></li>');
+  }else{
+    let pre='', gl=v;
+    if(ST.from==='abv'){gl=v*f; pre='Zuccheri = '+fmt(v,3)+' % vol × '+fmt(f,3)+' g/L = '+fmt(gl,2)+' g/L. '}
+    const arr=ST.from==='gkg'?GKG:GL, unit=ST.from==='gkg'?'g/kg':'g/L';
+    const ii=idxOf(arr,gl), b=bracketText(arr,ii);
+    li.push('<li><h4>Densità dalla tavola OIV</h4><p>'+pre+fmt(gl,3)+' '+unit+' cade tra '+fmt(b.b1,1)+' e '+fmt(b.b2,1)+' °Brix ('+fmt(b.v1,2)+' e '+fmt(b.v2,2)+' '+unit+').</p>'
+      +'<code class="big">d = '+fmt(d,6)+' g/mL</code></li>');
+  }
+  const bb=bracketText(DENS,idx), gb=bracketText(GL,idx), kb=bracketText(GKG,idx);
+  li.push('<li><h4>Brix e zuccheri dalla densità</h4><p>La densità '+fmt(d,6)+' cade tra '+fmt(bb.v1,4)+' ('+fmt(bb.b1,1)+' °Brix) e '+fmt(bb.v2,4)+' ('+fmt(bb.b2,1)+' °Brix). Si interpola in modo lineare.'
+    +(A.out?' Fuori tavola: valore estrapolato.':'')+'</p>'
+    +'<code class="big">'+fmt(A.brix,3)+' °Brix<br>'+fmt(A.gl,3)+' g/L ('+fmt(gb.v1,1)+' e '+fmt(gb.v2,1)+' nella tavola)<br>'+fmt(A.gkg,3)+' g/kg ('+fmt(kb.v1,1)+' e '+fmt(kb.v2,1)+' nella tavola)</code></li>');
+  li.push('<li><h4>Alcol potenziale</h4><p>Zuccheri divisi per il fattore. Con lo Standard OIV ('+fmt(F_OIV,3)+' g/L per 1% vol) e con la Resa piena ('+fmt(F_ALTA,3)+').</p>'
+    +'<code class="big">'+fmt(A.gl,3)+' ÷ '+fmt(F_OIV,3)+' = '+fmt(A.abvOiv,3)+' % vol<br>'+fmt(A.gl,3)+' ÷ '+fmt(F_ALTA,3)+' = '+fmt(A.abvAlta,3)+' % vol</code></li>');
+  if(ST.from!=='babo'){
+    li.push('<li><h4>Grado Babo dalla densità</h4><p>Si risolve la formula del primo passaggio per K.</p>'
+      +'<code class="big">0,022 · K² + 4,54 · K = (d − 1) · 1000<br>K = '+fmt(A.babo,3)+' °Babo</code></li>');
+  }
+  $('#steps').innerHTML=li.join('');
+}
+
+/* ---------- rialzo ---------- */
+const R=Object.assign({vol:'100',babo:'17',tType:'abv',target:'13',prod:'suc',mcr:''},LS.get('gz.rialzo',{}));
+const saveR=()=>LS.set('gz.rialzo',R);
+function buildRChips(){
+  const t=$('#rTChips'); t.innerHTML='';
+  [['abv','Alcol in % vol'],['babo','°Babo']].forEach(([k,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=l; b.dataset.k=k;
+    b.setAttribute('aria-pressed',R.tType===k?'true':'false');
+    b.addEventListener('click',()=>{
+      if(R.tType!==k){
+        const cur=parseNum(R.target);
+        if(cur!=null){
+          const g=R.tType==='abv'?cur*factor(ST.mode):sugarOfBabo(cur);
+          R.target=k==='abv'?fmt(g/factor(ST.mode),2).replace(',','.'):fmt(baboOfSugar(g),2).replace(',','.');
+        }
+      }
+      R.tType=k;saveR();syncRForm();$('#rTarget').value=R.target;renderR()});
+    t.appendChild(b);
+  });
+  const p=$('#rPChips'); p.innerHTML='';
+  [['suc','Saccarosio'],['mcr','MCR']].forEach(([k,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=l; b.dataset.k=k;
+    b.setAttribute('aria-pressed',R.prod===k?'true':'false');
+    b.addEventListener('click',()=>{R.prod=k;saveR();syncRForm();renderR()});
+    p.appendChild(b);
+  });
+}
+function syncRForm(){
+  $$('#rTChips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===R.tType?'true':'false'));
+  $$('#rPChips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===R.prod?'true':'false'));
+  $('#rMcrBox').hidden=R.prod!=='mcr';
+}
+function renderR(){
+  const o={volHl:parseNum(R.vol),babo:parseNum(R.babo),tType:R.tType,target:parseNum(R.target),prod:R.prod,mcr:parseNum(R.mcr),mode:ST.mode};
+  const out=$('#rOut');
+  if(o.volHl==null||o.babo==null||o.target==null){out.innerHTML='<p class="msg">Compila volume, Babo attuale e obiettivo.</p>';return}
+  if(o.prod==='mcr'&&o.mcr==null){out.innerHTML='<p class="msg">Inserisci i g/L di zuccheri del MCR.</p>';return}
+  const r=rialzoCalc(o);
+  if(r.err){out.innerHTML='<p class="msg">'+r.err+'</p>';return}
+  const perHl=o.prod==='suc'?[fmt(r.perHl*1000,0),'g/hL']:[fmt(r.perHl,2),'L/hL'];
+  out.innerHTML='<div class="big-n"><span class="n">'+fmt(r.qty,r.unit==='kg'?2:1)+'</span><span class="u">'+r.unit+' di '+(o.prod==='suc'?'saccarosio':'MCR')+'</span></div>'
+    +'<div class="rows">'
+    +'<div class="row"><span class="l">Per ettolitro di prodotto</span><span class="v">'+perHl[0]+'</span><span class="u">'+perHl[1]+'</span></div>'
+    +'<div class="row"><span class="l">Zuccheri attuali</span><span class="v">'+fmt(r.S0,1)+'</span><span class="u">g/L</span></div>'
+    +'<div class="row"><span class="l">Zuccheri obiettivo</span><span class="v">'+fmt(r.ST,1)+'</span><span class="u">g/L</span></div>'
+    +'<div class="row"><span class="l">Zuccheri da aggiungere</span><span class="v">'+fmt(r.dS,1)+'</span><span class="u">g/L</span></div>'
+    +'<div class="row"><span class="l">Alcol potenziale<small>da '+fmt(r.abv0,2)+' a</small></span><span class="v">'+fmt(r.abvEnd,2)+'</span><span class="u">% vol</span></div>'
+    +'<div class="row"><span class="l">Babo finale atteso</span><span class="v">'+fmt(r.baboEnd,2)+'</span><span class="u">°Babo</span></div>'
+    +'<div class="row"><span class="l">Volume finale<small>aumento di '+fmt(r.V1-r.V0,1)+' L</small></span><span class="v">'+fmt(r.V1/100,3)+'</span><span class="u">hL</span></div>'
+    +'</div>';
+}
+function bindR(){
+  [['#rVol','vol'],['#rBabo','babo'],['#rTarget','target'],['#rMcr','mcr']].forEach(([s,k])=>{
+    const el=$(s); el.value=R[k]||'';
+    el.addEventListener('input',()=>{R[k]=el.value;saveR();renderR()});
+  });
+}
+
+/* ---------- diluizione ---------- */
+const WATERS={oli:{n:'Oligominerale',hco3:106,res:142},min:{n:'Mineralizzata',hco3:433,res:540},dist:{n:'Distillata',hco3:0,res:0}};
+const DL=Object.assign({kind:'vino',vol:'100',a0:'14,5',babo:'21',a1:'13,5',hco3:'106',res:'142',
+  ph:'3,55',ta:'5,8',mal:'0,2',lac:'1,5',va:'0,45',sug:'2',ext:'',so2f:'28',so2t:'85'},LS.get('gz.diluizione',{}));
+const saveDL=()=>LS.set('gz.diluizione',DL);
+const DLF=[['#dVol','vol'],['#dA0','a0'],['#dBabo','babo'],['#dA1','a1'],['#dHco3','hco3'],['#dRes','res'],['#dPh','ph'],['#dTa','ta'],
+  ['#dMal','mal'],['#dLac','lac'],['#dVa','va'],['#dSug','sug'],['#dExt','ext'],['#dSo2f','so2f'],['#dSo2t','so2t']];
+function waterKey(){
+  const h=parseNum(DL.hco3), r=parseNum(DL.res);
+  return Object.keys(WATERS).find(k=>WATERS[k].hco3===h&&WATERS[k].res===r)||null;
+}
+function buildDLChips(){
+  const k=$('#dKChips'); k.innerHTML='';
+  [['vino','Vino'],['mosto','Mosto']].forEach(([key,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=l; b.dataset.k=key;
+    b.addEventListener('click',()=>{DL.kind=key;saveDL();syncDL();renderDL()});
+    k.appendChild(b);
+  });
+  const w=$('#dWChips'); w.innerHTML='';
+  Object.keys(WATERS).forEach(key=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=WATERS[key].n; b.dataset.k=key;
+    b.addEventListener('click',()=>{
+      DL.hco3=String(WATERS[key].hco3); DL.res=String(WATERS[key].res);
+      $('#dHco3').value=DL.hco3; $('#dRes').value=DL.res; saveDL(); syncDL(); renderDL();
+    });
+    w.appendChild(b);
+  });
+}
+function syncDL(){
+  const mosto=DL.kind==='mosto';
+  $$('#dKChips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===DL.kind?'true':'false'));
+  const wk=waterKey();
+  $$('#dWChips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===wk?'true':'false'));
+  $('#dA0Box').hidden=mosto; $('#dBaboBox').hidden=!mosto; $('#dSugBox').hidden=mosto;
+  $('#dA1Lab').textContent=mosto?'Alcol potenziale obiettivo, % vol':'Alcol obiettivo, % vol';
+}
+function renderDL(){
+  const g=k=>parseNum(DL[k]), out=$('#dOut');
+  const r=dilutionCalc({kind:DL.kind,V:g('vol'),A0:g('a0'),babo:g('babo'),A1:g('a1'),mode:ST.mode,
+    water:{hco3:g('hco3')||0,res:g('res')||0},
+    p:{pH:g('ph'),ta:g('ta'),mal:g('mal'),lac:g('lac'),va:g('va'),sug:g('sug'),ext:g('ext'),so2f:g('so2f'),so2t:g('so2t')}});
+  if(r.err){out.innerHTML='<p class="msg">'+r.err+'</p>';return}
+  const L=r.W*100;
+  const main=L>=1000?[fmt(r.W,2),'hL di acqua']:[fmt(L,L<100?1:0),'L di acqua'];
+  let h='<div class="big-n"><span class="n">'+main[0]+'</span><span class="u">'+main[1]+'</span></div>'
+    +'<div class="rows">'
+    +'<div class="row"><span class="l">Acqua per ettolitro<small>di '+(DL.kind==='mosto'?'mosto':'vino')+' da diluire</small></span><span class="v">'+fmt(r.perHl,2)+'</span><span class="u">L/hL</span></div>'
+    +'<div class="row"><span class="l">Acqua sul volume finale</span><span class="v">'+fmt(r.wpct,2)+'</span><span class="u">%</span></div>'
+    +'<div class="row"><span class="l">Volume finale</span><span class="v">'+fmt(r.Vt,2)+'</span><span class="u">hL</span></div>'
+    +'<div class="row"><span class="l">Fattore di diluizione<small>concentrazioni × questo valore</small></span><span class="v">'+fmt(r.f,4)+'</span><span class="u"></span></div>'
+    +'</div>'
+    +'<div class="tw"><table class="tbl"><thead><tr><th>Parametro</th><th>Prima</th><th>Dopo</th><th>Variazione</th></tr></thead><tbody>';
+  r.rows.forEach(x=>{
+    const dd=x.k==='ph'?3:x.d;
+    h+='<tr'+(x.em?' class="em"':'')+'><td>'+x.l+(x.u?'<small>'+x.u+'</small>':'')+'</td><td>'+fmt(x.b,x.d)+'</td><td>'+fmt(x.a,x.d)+'</td><td class="dl">'+(x.em?'<i></i>':'')+sgn(x.a-x.b,dd)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(!r.hasPH) h+='<p class="note">Inserisci pH e acidità totale per stimare la variazione del pH e l\'SO₂ molecolare.</p>';
+  out.innerHTML=h;
+}
+function bindDL(){
+  DLF.forEach(([s,k])=>{
+    const el=$(s); el.value=DL[k]||'';
+    el.addEventListener('input',()=>{DL[k]=el.value;saveDL();if(k==='hco3'||k==='res')syncDL();renderDL()});
+  });
+}
+
+/* ---------- tendine animate ---------- */
+function bindAcc(){
+  $$('details.acc').forEach(d=>{
+    const sum=d.querySelector('summary'), body=d.querySelector('.acc-body'); let busy=false;
+    sum.addEventListener('click',e=>{
+      e.preventDefault(); if(busy) return;
+      if(reduce){d.open=!d.open;return}
+      busy=true;
+      if(d.open){
+        d.classList.add('closing'); body.style.overflow='hidden';
+        const a=body.animate([{height:body.offsetHeight+'px',opacity:1},{height:'0px',opacity:0}],{duration:260,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'});
+        a.onfinish=()=>{d.open=false;a.cancel();body.style.overflow='';d.classList.remove('closing');busy=false};
+      }else{
+        d.open=true; const h=body.offsetHeight; body.style.overflow='hidden';
+        const a=body.animate([{height:'0px',opacity:0},{height:h+'px',opacity:1}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)'});
+        a.onfinish=()=>{body.style.overflow='';busy=false};
+      }
+    });
+  });
+}
+
+/* ---------- avvio ---------- */
+function renderAll(){
+  refreshChips(); renderConv(); renderR(); renderDL();
+  $('#fOiv').textContent=fmt(F_OIV,3)+' g/L'; $('#fAlta').textContent=fmt(F_ALTA,3)+' g/L';
+  $$('.seg button').forEach(b=>b.setAttribute('aria-checked',b.dataset.mode===ST.mode?'true':'false'));
+}
+function init(){
+  buildChips($('#chipsFrom'),'from',renderAll);
+  buildChips($('#chipsTo'),'to',renderAll);
+  $('#inVal').value=ST.val;
+  $('#inVal').addEventListener('input',e=>{ST.val=e.target.value;save();renderConv()});
+  $('#inVal').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
+  $('#btnSwap').addEventListener('click',()=>{
+    const v=parseNum(ST.val);
+    if(v!=null){
+      const A=derive(densFrom(ST.from,v,ST.mode)); const nv=UNITS[ST.to].get(A,ST.mode);
+      ST.val=fmt(nv,Math.max(ST.dec,2)).replace(/\./g,'').replace(',','.');
+      $('#inVal').value=ST.val;
+    }
+    const t=ST.from; ST.from=ST.to; ST.to=t; save(); renderAll();
+  });
+  $$('.seg button').forEach(b=>b.addEventListener('click',()=>{ST.mode=b.dataset.mode;save();renderAll();toast(MODENAME[ST.mode]+', '+fmt(factor(ST.mode),3)+' g/L per 1% vol')}));
+  $('#decMinus').addEventListener('click',()=>{ST.dec=Math.max(0,ST.dec-1);save();renderConv()});
+  $('#decPlus').addEventListener('click',()=>{ST.dec=Math.min(4,ST.dec+1);save();renderConv()});
+  $('#btnTheme').addEventListener('click',()=>{
+    const t=curTheme()==='dark'?'light':'dark'; ST.theme=t; save(); applyTheme(t); toast(t==='dark'?'Tonalità scura':'Tonalità chiara');
+  });
+  $('#btnNeon').addEventListener('click',()=>{
+    ST.neon=(ST.neon+1)%NEONS.length; save(); applyNeon(ST.neon); toast('Colore fluo: '+NEONS[ST.neon].n);
+  });
+  buildRChips(); syncRForm(); bindR();
+  buildDLChips(); bindDL(); syncDL();
+  bindAcc();
+  /* firma a puntini nel piede: anello aperto, sette punti accesi */
+  const g=$('#sigDots'); let s='';
+  for(let i=0;i<12;i++){const a=(-210+i*(240/11))*Math.PI/180;s+='<circle cx="'+(15+11*Math.cos(a)).toFixed(2)+'" cy="'+(15+11*Math.sin(a)).toFixed(2)+'" r="1.6" fill="'+(i<7?'var(--neon)':'var(--line)')+'" stroke="'+(i<7?'var(--ink)':'none')+'" stroke-width=".6"/>'}
+  g.innerHTML=s;
+  renderAll();
+  window.addEventListener('resize',fitVal);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitVal);
+}
+init();
+})();
+</script>
+</body>
+</html>
